@@ -34,7 +34,7 @@ handle_submit(SubmitData) ->
     [Id, Status, MAC] = string:tokens(SubmitData, "!"),
     Subject = lists:append([Id, "!", Status]),
     MAC = mochihex:to_hex(hmac:hmac256(get_key(), Subject)),
-    Object = #hacksense_status{id=Id, timestamp=os:timestamp(),
+    Object = #hacksense_status{id=Id, timestamp=calendar:local_time(),
                                status=list_to_integer(Status)},
     {atomic, ok} = mnesia:transaction(fun() -> mnesia:write(Object) end).
 
