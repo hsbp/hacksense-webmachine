@@ -1,0 +1,1 @@
+-record(hacksense_status, {id, timestamp, status}).
