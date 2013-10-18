@@ -5,16 +5,30 @@
 -include_lib("stdlib/include/qlc.hrl").
 -include_lib("hacksense_status.hrl").
 
+-define(ISO_DATETIME_FMT, "~4.10.0B-~2.10.0B-~2.10.0B ~2.10.0B:~2.10.0B:~2.10.0B").
+
 init([]) -> {ok, undefined}.
 
 to_html(ReqData, State) ->
     Body = case wrq:path_info(base, ReqData) of
         "submit" ->
             handle_submit(wrq:disp_path(ReqData)), "OK";
+        "status.txt" -> format_txt(get_status());
         "status" -> io_lib:format("~p", [get_status()]);
         A -> io_lib:format("~p", [A]) %% XXX debug
     end,
     {Body, ReqData, State}.
+
+format_txt(Status) ->
+    OpenClosed = case Status#hacksense_status.status of
+        1 -> "open";
+        0 -> "closed"
+    end,
+    Since = timestamp_to_isofmt(Status#hacksense_status.timestamp),
+    ["H.A.C.K. is currently ", OpenClosed, " since ", Since, "\n"].
+
+timestamp_to_isofmt({{Y, Mo, D}, {H, Mn, S}}) ->
+    io_lib:format(?ISO_DATETIME_FMT, [Y, Mo, D, H, Mn, S]).
 
 get_status() ->
     {atomic, Row} = mnesia:transaction(fun() ->
