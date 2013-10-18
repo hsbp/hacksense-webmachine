@@ -47,7 +47,7 @@ init_schema() ->
     case mnesia:create_table(hacksense_status, [
         {attributes, record_info(fields, hacksense_status)}, {disc_copies, [node()]}]) of
         {atomic, ok} -> ok;
-        {aborted, {already_exists,hacksense_status}} -> ok
+        {aborted, {already_exists, hacksense_status}} -> ok
     end,
     ok = mnesia:wait_for_tables([hacksense_status], 5000).
 
