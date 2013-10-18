@@ -1,10 +1,6 @@
-%% @author author <author@example.com>
-%% @copyright YYYY author.
-
 %% @doc hacksense startup code
 
 -module(hacksense).
--author('author <author@example.com>').
 -export([start/0, start_link/0, stop/0]).
 
 -include_lib("hacksense_status.hrl").

@@ -1,10 +1,6 @@
-%% @author author <author@example.com>
-%% @copyright YYYY author.
-
 %% @doc Supervisor for the hacksense application.
 
 -module(hacksense_sup).
--author('author <author@example.com>').
 
 -behaviour(supervisor).
 
