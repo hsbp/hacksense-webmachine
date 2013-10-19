@@ -1,5 +1,5 @@
 -module(hacksense_resource).
--export([init/1, to_html/2]).
+-export([init/1, to_html/2, generate_etag/2]).
 
 -include_lib("webmachine/include/webmachine.hrl").
 -include_lib("stdlib/include/qlc.hrl").
@@ -8,6 +8,9 @@
 -define(ISO_DATETIME_FMT, "~4.10.0B-~2.10.0B-~2.10.0B ~2.10.0B:~2.10.0B:~2.10.0B").
 
 init([]) -> {ok, undefined}.
+
+generate_etag(ReqData, State) ->
+    {(get_status())#hacksense_status.id, ReqData, State}.
 
 to_html(ReqData, State) ->
     Body = case wrq:path_info(base, ReqData) of
