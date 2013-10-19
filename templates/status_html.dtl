@@ -1,5 +1,8 @@
+{% extends "hacksense_layout.dtl" %}
+{% block content %}
 <p>
 	<a href="http://hspbp.org/">H.A.C.K.</a> is currently
 	<span class="{{ open_closed }}">{{ open_closed }}</span>
 	since {{ since }}
 </p>
+{% endblock %}
