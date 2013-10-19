@@ -13,6 +13,7 @@ to_html(ReqData, State) ->
     Body = case wrq:path_info(base, ReqData) of
         "submit" ->
             handle_submit(wrq:disp_path(ReqData)), "OK";
+        "status.csv" -> format_csv(get_status());
         "status.txt" -> format_txt(get_status());
         "status" -> format_html(get_status());
         A -> io_lib:format("~p", [A]) %% XXX debug
@@ -30,6 +31,11 @@ format_txt(Status) ->
     OpenClosed = status_to_open_closed(Status),
     Since = timestamp_to_isofmt(Status#hacksense_status.timestamp),
     ["H.A.C.K. is currently ", OpenClosed, " since ", Since, "\n"].
+
+format_csv(Status) ->
+    Since = timestamp_to_isofmt(Status#hacksense_status.timestamp),
+    io_lib:format("~s;~s;~B\n",
+        [Status#hacksense_status.id, Since, Status#hacksense_status.status]).
 
 status_to_open_closed(Status) ->
     case Status#hacksense_status.status of
