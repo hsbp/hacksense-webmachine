@@ -13,15 +13,15 @@ generate_etag(ReqData, State) ->
     {(get_status())#hacksense_status.id, ReqData, State}.
 
 to_html(ReqData, State) ->
-    Body = case wrq:path_info(base, ReqData) of
+    {Body, ContentType} = case wrq:path_info(base, ReqData) of
         "submit" ->
-            handle_submit(wrq:disp_path(ReqData)), "OK";
-        "status.csv" -> format_csv(get_status());
-        "status.txt" -> format_human(txt, get_status());
-        "status" -> format_human(html, get_status());
-        A -> io_lib:format("~p", [A]) %% XXX debug
+            handle_submit(wrq:disp_path(ReqData)), {"OK", "text/plain"};
+        "status.csv" -> {format_csv(get_status()), "text/csv"};
+        "status.txt" -> {format_human(txt, get_status()), "text/plain"};
+        "status" -> {format_human(html, get_status()), "text/html"};
+        A -> {io_lib:format("~p", [A]), "text/plain"} %% XXX debug
     end,
-    {Body, ReqData, State}.
+    {Body, wrq:set_resp_header("Content-Type", ContentType, ReqData), State}.
 
 format_human(Format, Status) ->
     OpenClosed = status_to_open_closed(Status),
