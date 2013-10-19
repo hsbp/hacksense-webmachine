@@ -14,22 +14,22 @@ to_html(ReqData, State) ->
         "submit" ->
             handle_submit(wrq:disp_path(ReqData)), "OK";
         "status.csv" -> format_csv(get_status());
-        "status.txt" -> format_txt(get_status());
-        "status" -> format_html(get_status());
+        "status.txt" -> format_human(txt, get_status());
+        "status" -> format_human(html, get_status());
         A -> io_lib:format("~p", [A]) %% XXX debug
     end,
     {Body, ReqData, State}.
 
-format_html(Status) ->
+format_human(Format, Status) ->
     OpenClosed = status_to_open_closed(Status),
     Since = timestamp_to_isofmt(Status#hacksense_status.timestamp),
+    format_human(Format, OpenClosed, Since).
+
+format_human(html, OpenClosed, Since) ->
     {ok, Content} = status_html_dtl:render(
                       [{open_closed, OpenClosed}, {since, Since}]),
-    Content.
-
-format_txt(Status) ->
-    OpenClosed = status_to_open_closed(Status),
-    Since = timestamp_to_isofmt(Status#hacksense_status.timestamp),
+    Content;
+format_human(txt, OpenClosed, Since) ->
     ["H.A.C.K. is currently ", OpenClosed, " since ", Since, "\n"].
 
 format_csv(Status) ->
