@@ -14,10 +14,17 @@ to_html(ReqData, State) ->
         "submit" ->
             handle_submit(wrq:disp_path(ReqData)), "OK";
         "status.txt" -> format_txt(get_status());
-        "status" -> io_lib:format("~p", [get_status()]);
+        "status" -> format_html(get_status());
         A -> io_lib:format("~p", [A]) %% XXX debug
     end,
     {Body, ReqData, State}.
+
+format_html(Status) ->
+    OpenClosed = status_to_open_closed(Status),
+    Since = timestamp_to_isofmt(Status#hacksense_status.timestamp),
+    {ok, Content} = status_html_dtl:render(
+                      [{open_closed, OpenClosed}, {since, Since}]),
+    Content.
 
 format_txt(Status) ->
     OpenClosed = status_to_open_closed(Status),
