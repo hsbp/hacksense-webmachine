@@ -50,18 +50,21 @@ timestamp_to_isofmt({{Y, Mo, D}, {H, Mn, S}}) ->
     io_lib:format(?ISO_DATETIME_FMT, [Y, Mo, D, H, Mn, S]).
 
 get_status() ->
-    {atomic, Row} = mnesia:transaction(fun() ->
+    case get_date_ordered_statuses(descending, 1) of
+         [Top1] -> Top1;
+         [] -> undefined;
+         Error -> Error
+    end.
+
+get_date_ordered_statuses(OrderDir, Number) ->
+    {atomic, Rows} = mnesia:transaction(fun() ->
         TH = mnesia:table(hacksense_status),
         Q = qlc:q([X || X <- TH]),
-        QS = qlc:keysort(#hacksense_status.timestamp, Q, [{order, descending}]),
+        QS = qlc:keysort(#hacksense_status.timestamp, Q, [{order, OrderDir}]),
         QC = qlc:cursor(QS),
-        case qlc:next_answers(QC, 1) of
-			 [Top1] -> Top1;
-			 [] -> undefined;
-			 Error -> Error
-        end
+        qlc:next_answers(QC, Number)
     end),
-    Row.
+    Rows.
 
 handle_submit(SubmitData) ->
     [Id, Status, MAC] = string:tokens(SubmitData, "!"),
