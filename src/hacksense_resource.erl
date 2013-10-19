@@ -20,12 +20,15 @@ to_html(ReqData, State) ->
     {Body, ReqData, State}.
 
 format_txt(Status) ->
-    OpenClosed = case Status#hacksense_status.status of
-        1 -> "open";
-        0 -> "closed"
-    end,
+    OpenClosed = status_to_open_closed(Status),
     Since = timestamp_to_isofmt(Status#hacksense_status.timestamp),
     ["H.A.C.K. is currently ", OpenClosed, " since ", Since, "\n"].
+
+status_to_open_closed(Status) ->
+    case Status#hacksense_status.status of
+        1 -> "open";
+        0 -> "closed"
+    end.
 
 timestamp_to_isofmt({{Y, Mo, D}, {H, Mn, S}}) ->
     io_lib:format(?ISO_DATETIME_FMT, [Y, Mo, D, H, Mn, S]).
