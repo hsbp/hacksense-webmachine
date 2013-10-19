@@ -53,7 +53,7 @@ get_status() ->
     {atomic, Row} = mnesia:transaction(fun() ->
         TH = mnesia:table(hacksense_status),
         Q = qlc:q([X || X <- TH]),
-        QS = qlc:keysort(#hacksense_status.timestamp, Q, [{order,descending}]),
+        QS = qlc:keysort(#hacksense_status.timestamp, Q, [{order, descending}]),
         QC = qlc:cursor(QS),
         case qlc:next_answers(QC, 1) of
 			 [Top1] -> Top1;
