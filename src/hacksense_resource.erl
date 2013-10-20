@@ -147,7 +147,8 @@ get_date_ordered_statuses(OrderDir, Number) ->
     {atomic, Rows} = mnesia:transaction(fun() ->
         TH = mnesia:table(hacksense_status),
         Q = qlc:q([X || X <- TH]),
-        QS = qlc:keysort(#hacksense_status.timestamp, Q, [{order, OrderDir}]),
+        QS1 = qlc:keysort(#hacksense_status.id, Q, [{order, ascending}]),
+        QS = qlc:keysort(#hacksense_status.timestamp, QS1, [{order, OrderDir}]),
         QC = qlc:cursor(QS),
         qlc:next_answers(QC, Number)
     end),
