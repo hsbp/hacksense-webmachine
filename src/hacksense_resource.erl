@@ -1,6 +1,6 @@
 -module(hacksense_resource).
 -export([init/1, generate_etag/2, content_types_provided/2, is_authorized/2]).
--export([to_html/2, to_csv/2, to_rss/2, to_xml/2, to_txt/2]).
+-export([to_html/2, to_csv/2, to_rss/2, to_xml/2, to_txt/2, to_json/2]).
 
 -include_lib("webmachine/include/webmachine.hrl").
 -include_lib("stdlib/include/qlc.hrl").
@@ -11,6 +11,7 @@
 -define(CT_RSS, {"application/rss+xml", to_rss}).
 -define(CT_XML, {"text/xml", to_xml}).
 -define(CT_TXT, {"text/plain", to_txt}).
+-define(CT_JSON, {"application/json", to_json}).
 -define(CT_HTML, {"text/html", to_html}).
 -define(CSV_HEAD, "ID;Timestamp;Status\n").
 
@@ -34,8 +35,9 @@ content_types_provided(ReqData, {_, csv, _} = State) -> {[?CT_CSV], ReqData, Sta
 content_types_provided(ReqData, {_, rss, _} = State) -> {[?CT_RSS], ReqData, State};
 content_types_provided(ReqData, {_, xml, _} = State) -> {[?CT_XML], ReqData, State};
 content_types_provided(ReqData, {_, txt, _} = State) -> {[?CT_TXT], ReqData, State};
+content_types_provided(ReqData, {_, json, _} = State) -> {[?CT_JSON], ReqData, State};
 content_types_provided(ReqData, State) ->
-    {[?CT_HTML, ?CT_CSV, ?CT_RSS, ?CT_XML, ?CT_TXT], ReqData, State}.
+    {[?CT_HTML, ?CT_CSV, ?CT_RSS, ?CT_XML, ?CT_TXT, ?CT_JSON], ReqData, State}.
 
 
 %% HTML
@@ -52,6 +54,19 @@ dtl_params(history, History) ->
 dtl_params(status, Status) ->
     {OpenClosed, Since} = human_status(Status),
     [{open_closed, OpenClosed}, {since, Since}].
+
+
+%% JSON
+
+to_json(ReqData, {status, _, Status} = State) ->
+    {mochijson2:encode(status_to_json(Status)), ReqData, State};
+to_json(ReqData, {history, _, History} = State) ->
+    {mochijson2:encode(lists:map(fun status_to_json/1, History)), ReqData, State}.
+
+status_to_json(S) ->
+    [{id, list_to_binary(S#hacksense_status.id)},
+     {timestamp, iolist_to_binary(timestamp_to_isofmt(S))},
+     {status, S#hacksense_status.status == 1}].
 
 
 %% CSV

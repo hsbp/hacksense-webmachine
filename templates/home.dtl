@@ -4,11 +4,12 @@
 <h2>/status</h2>
 <p>Shows the current status of H.A.C.K. and the timestamp of the last change in
 <a href="status">HTML</a>, <a href="status.xml">XML</a>, <a href="status.txt">TXT</a>,
-<a href="status.csv">CSV</a>, and <a href="status.rss">RSS</a> formats.</p>
+<a href="status.csv">CSV</a>, <a href="status.rss">RSS</a>,
+and <a href="status.json">JSON</a> formats.</p>
 <h2>/history</h2>
 <p>Shows the history of H.A.C.K. in
 <a href="history">HTML</a>, <a href="history.xml">XML</a>,
-and <a href="history.csv">CSV</a> formats.</p>
+<a href="history.csv">CSV</a>, and <a href="history.json">JSON</a> formats.</p>
 <p>Powered by <a href="http://webmachine.basho.com/">webmachine</a>, <a href="http://validator.w3.org/check?uri=referer">Valid XHTML</a>, <a href="http://validator.w3.org/feed/check.cgi?url=http%3A//vsza.hu/hacksense/status.rss">Valid RSS</a>, source code is available at <a href="https://github.com/hsbp/hacksense-webmachine">GitHub</a></p>
 <script type="text/javascript">
 	var flattr_url = 'http://hspbp.org/hacksense';
