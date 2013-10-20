@@ -13,20 +13,33 @@ generate_etag(ReqData, State) ->
     {(get_status())#hacksense_status.id, ReqData, State}.
 
 to_html(ReqData, State) ->
-    {Body, ContentType} = case wrq:path_info(base, ReqData) of
+    Base = wrq:path_info(base, ReqData),
+    Body = case Base of
         "submit" ->
-            handle_submit(wrq:disp_path(ReqData)), {"OK", "text/plain"};
-        "history.csv" -> {csv_history(), "text/csv"};
-        "history.xml" -> {xml_history(), "text/xml"};
-        "history" -> {html_history(), "text/html"};
-        "status.csv" -> {format_csv(get_status()), "text/csv"};
-        "status.txt" -> {format_human(txt, get_status()), "text/plain"};
-        "status.xml" -> {format_xml(get_status()), "text/xml"};
-        "status.rss" -> {format_rss(get_status()), "application/rss+xml"};
-        "status" -> {format_human(html, get_status()), "text/html"};
-        undefined -> {home_page(), "text/html"}
+            handle_submit(wrq:disp_path(ReqData)), "OK";
+        "history.csv" -> csv_history();
+        "history.xml" -> xml_history();
+        "history" -> html_history();
+        "status.csv" -> format_csv(get_status());
+        "status.txt" -> format_human(txt, get_status());
+        "status.xml" -> format_xml(get_status());
+        "status.rss" -> format_rss(get_status());
+        "status" -> format_human(html, get_status());
+        undefined -> home_page()
     end,
+    ContentType = content_type(Base),
     {Body, wrq:set_resp_header("Content-Type", ContentType, ReqData), State}.
+
+content_type(undefined) -> "text/html; charset=UTF-8";
+content_type("submit") -> "text/plain";
+content_type(Name) ->
+    case filename:extension(Name) of
+        "csv" -> "text/csv";
+        "xml" -> "text/xml";
+        "rss" -> "application/rss+xml";
+        "txt" -> "text/plain";
+        _ -> "text/html"
+    end ++ "; charset=UTF-8".
 
 home_page() -> {ok, Content} = home_dtl:render([]), Content.
 
