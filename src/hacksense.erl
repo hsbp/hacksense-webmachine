@@ -1,7 +1,7 @@
 %% @doc hacksense startup code
 
 -module(hacksense).
--export([start/0, start_link/0, stop/0]).
+-export([start/0, start_link/0, stop/0, import_remote_csv/1]).
 
 -include_lib("hacksense_status.hrl").
 
@@ -50,6 +50,21 @@ init_schema() ->
         {aborted, {already_exists, hacksense_status}} -> ok
     end,
     ok = mnesia:wait_for_tables([hacksense_status], 5000).
+
+import_remote_csv(URL) ->
+    {ok, {_, _, CSV}} = httpc:request(get, {URL, []}, [], [{body_format, binary}]),
+    [_Header | Lines] = binary:split(CSV, <<$\n>>, [global, trim]),
+    {atomic, ok} = mnesia:transaction(fun () ->
+        lists:foreach(fun import_csv_line/1, Lines) end).
+
+import_csv_line(
+    <<Id:36/binary, $;, Y:4/binary, $-, Mo:2/binary, $-, D:2/binary, $\x20,
+      H:2/binary, $:, Mi:2/binary, $:, S:2/binary, $;, Status:1/binary>>) ->
+    Date = {binary_to_integer(Y), binary_to_integer(Mo), binary_to_integer(D)},
+    Time = {binary_to_integer(H), binary_to_integer(Mi), binary_to_integer(S)},
+    Object = #hacksense_status{id=binary_to_list(Id), timestamp={Date, Time},
+                               status=binary_to_integer(Status)},
+    mnesia:write(Object).
 
 %% @spec stop() -> ok
 %% @doc Stop the hacksense server.
