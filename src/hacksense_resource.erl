@@ -17,9 +17,9 @@ to_html(ReqData, State) ->
     Body = case Base of
         "submit" ->
             handle_submit(wrq:disp_path(ReqData)), "OK";
-        "history.csv" -> csv_history();
-        "history.xml" -> xml_history();
-        "history" -> html_history();
+        "history.csv" -> csv_history(get_history());
+        "history.xml" -> xml_history(get_history());
+        "history" -> html_history(get_history());
         "status.csv" -> format_csv(get_status());
         "status.txt" -> format_human(txt, get_status());
         "status.xml" -> format_xml(get_status());
@@ -43,14 +43,14 @@ content_type(Name) ->
 
 home_page() -> {ok, Content} = home_dtl:render([]), Content.
 
-html_history() ->
-    Events = [{S#hacksense_status.id, timestamp_to_isofmt(S), status_to_open_closed(S)}
-              || S <- get_date_ordered_statuses(ascending, all_remaining)],
+html_history(History) ->
+    Events = [{S#hacksense_status.id, timestamp_to_isofmt(S),
+               status_to_open_closed(S)} || S <- History],
     {ok, Content} = history_html_dtl:render([{events, Events}]),
     Content.
 
-csv_history() ->
-    lists:map(fun format_csv/1, get_date_ordered_statuses(ascending, all_remaining)).
+csv_history(History) ->
+    lists:map(fun format_csv/1, History).
 
 format_human(Format, Status) ->
     OpenClosed = status_to_open_closed(Status),
@@ -74,9 +74,8 @@ format_human(html, OpenClosed, Since) ->
 format_human(txt, OpenClosed, Since) ->
     ["H.A.C.K. is currently ", OpenClosed, " since ", Since, "\n"].
 
-xml_history() ->
-    Children = lists:map(fun status_xml/1,
-                         get_date_ordered_statuses(ascending, all_remaining)),
+xml_history(History) ->
+    Children = lists:map(fun status_xml/1, History),
     xmerl:export_simple([{history, Children}], xmerl_xml).
 
 format_xml(Status) ->
@@ -109,6 +108,8 @@ get_status() ->
          [] -> undefined;
          Error -> Error
     end.
+
+get_history() -> get_date_ordered_statuses(ascending, all_remaining).
 
 get_date_ordered_statuses(OrderDir, Number) ->
     {atomic, Rows} = mnesia:transaction(fun() ->
