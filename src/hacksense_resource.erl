@@ -1,6 +1,6 @@
 -module(hacksense_resource).
 -export([init/1, generate_etag/2, content_types_provided/2, is_authorized/2]).
--export([to_html/2, to_csv/2, to_rss/2, to_xml/2, to_txt/2, to_json/2]).
+-export([to_html/2, to_csv/2, to_rss/2, to_xml/2, to_txt/2, to_json/2, to_eeml/2]).
 
 -include_lib("webmachine/include/webmachine.hrl").
 -include_lib("stdlib/include/qlc.hrl").
@@ -13,6 +13,7 @@
 -define(CT_TXT, {"text/plain", to_txt}).
 -define(CT_JSON, {"application/json", to_json}).
 -define(CT_HTML, {"text/html", to_html}).
+-define(CT_EEML, {"text/xml", to_eeml}).
 -define(CSV_HEAD, "ID;Timestamp;Status\n").
 
 
@@ -36,6 +37,7 @@ content_types_provided(ReqData, {_, rss, _} = State) -> {[?CT_RSS], ReqData, Sta
 content_types_provided(ReqData, {_, xml, _} = State) -> {[?CT_XML], ReqData, State};
 content_types_provided(ReqData, {_, txt, _} = State) -> {[?CT_TXT], ReqData, State};
 content_types_provided(ReqData, {_, json, _} = State) -> {[?CT_JSON], ReqData, State};
+content_types_provided(ReqData, {_, eeml, _} = State) -> {[?CT_EEML], ReqData, State};
 content_types_provided(ReqData, State) ->
     {[?CT_HTML, ?CT_CSV, ?CT_RSS, ?CT_XML, ?CT_TXT, ?CT_JSON], ReqData, State}.
 
@@ -105,6 +107,27 @@ to_rss(ReqData, {status, _, Status} = State) ->
                          {item, ItemContents}]},
     RSS = xmerl:export_simple([{rss, [{version, "2.0"}], [Channel]}], xmerl_xml),
     {RSS, ReqData, State}.
+
+
+%% EEML
+
+to_eeml(ReqData, {status, _, S} = State) ->
+    Location = {location, [{exposure, "indoor"}, {domain, "physical"}, {disposition, "fixed"}],
+                [{name, ["Hackerspace BP"]}, {lat, ["47.489196"]}, {lon, ["19.059512"]}, {ele, ["117"]}]},
+    Value = {value, [{minValue, "0.0"}, {maxValue, "1.0"}], [integer_to_list(S#hacksense_status.status)]},
+    Data = {data, [{id, 0}], [{tag, ["status code"]}, {tag, ["hackerspace opening"]}, Value]},
+    Env = {environment, [{updated, timestamp_to_isofmt(S, $T)}],
+           [{title, ["Hacksense Budapest"]}, {feed, ["http://vsza.hu/hacksense/eeml_status.xml"]},
+            {status, ["live"]}, {description, ["Hacksense Hackerspace Budapest"]},
+            {icon, ["http://www.hsbp.org/icon.png"]}, {website, ["http://www.hsbp.org/"]},
+            Location, Data]},
+    XML = xmerl:export_simple([{eeml, [
+        {xmlns, "http://www.eeml.org/xsd/005"},
+        {'xmlns:xsi', "http://www.w3.org/2001/XMLSchema-instance"},
+        {'xsi:schemaLocation',
+         "http://www.eeml.org/xsd/005 http://www.eeml.org/xsd/005/005.xsd"}
+        ], [Env]}], xmerl_xml),
+    {XML, ReqData, State}.
 
 
 %% XML
