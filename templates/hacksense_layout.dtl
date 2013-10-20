@@ -18,6 +18,10 @@
             .uuid {
                 font-family: monospace;
             }
+
+            img {
+                border: none;
+            }
         </style>
     </head>
     <body>

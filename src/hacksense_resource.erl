@@ -24,9 +24,11 @@ to_html(ReqData, State) ->
         "status.xml" -> {format_xml(get_status()), "text/xml"};
         "status.rss" -> {format_rss(get_status()), "application/rss+xml"};
         "status" -> {format_human(html, get_status()), "text/html"};
-        A -> {io_lib:format("~p", [A]), "text/plain"} %% XXX debug
+        undefined -> {home_page(), "text/html"}
     end,
     {Body, wrq:set_resp_header("Content-Type", ContentType, ReqData), State}.
+
+home_page() -> {ok, Content} = home_dtl:render([]), Content.
 
 html_history() ->
     Events = [{S#hacksense_status.id, timestamp_to_isofmt(S), status_to_open_closed(S)}
