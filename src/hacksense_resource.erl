@@ -6,7 +6,7 @@
 -include_lib("stdlib/include/qlc.hrl").
 -include_lib("hacksense_status.hrl").
 
--define(ISO_DATETIME_FMT, "~4.10.0B-~2.10.0B-~2.10.0B ~2.10.0B:~2.10.0B:~2.10.0B").
+-define(ISO_DATETIME_FMT, "~4.10.0B-~2.10.0B-~2.10.0B~c~2.10.0B:~2.10.0B:~2.10.0B").
 -define(CT_CSV, {"text/csv", to_csv}).
 -define(CT_RSS, {"application/rss+xml", to_rss}).
 -define(CT_XML, {"text/xml", to_xml}).
@@ -142,8 +142,10 @@ status_to_open_closed(Status, Open, Closed) ->
         0 -> Closed
     end.
 
-timestamp_to_isofmt(#hacksense_status{timestamp={{Y, Mo, D}, {H, Mn, S}}}) ->
-    io_lib:format(?ISO_DATETIME_FMT, [Y, Mo, D, H, Mn, S]).
+timestamp_to_isofmt(Status) ->
+    timestamp_to_isofmt(Status, $\x20).
+timestamp_to_isofmt(#hacksense_status{timestamp={{Y, Mo, D}, {H, Mn, S}}}, T) ->
+    io_lib:format(?ISO_DATETIME_FMT, [Y, Mo, D, T, H, Mn, S]).
 
 
 %% Data access functions
