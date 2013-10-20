@@ -32,7 +32,7 @@ csv_history() ->
 
 format_human(Format, Status) ->
     OpenClosed = status_to_open_closed(Status),
-    Since = timestamp_to_isofmt(Status#hacksense_status.timestamp),
+    Since = timestamp_to_isofmt(Status),
     format_human(Format, OpenClosed, Since).
 
 format_rss(Status) ->
@@ -61,12 +61,12 @@ format_xml(Status) ->
     xmerl:export_simple([{status, [status_xml(Status)]}], xmerl_xml).
 
 status_xml(S) ->
-    Since = lists:flatten(timestamp_to_isofmt(S#hacksense_status.timestamp)),
+    Since = lists:flatten(timestamp_to_isofmt(S)),
     {state_change, [{id, S#hacksense_status.id}, {'when', Since},
                     {what, S#hacksense_status.status}], []}.
 
 format_csv(Status) ->
-    Since = timestamp_to_isofmt(Status#hacksense_status.timestamp),
+    Since = timestamp_to_isofmt(Status),
     io_lib:format("~s;~s;~B\n",
         [Status#hacksense_status.id, Since, Status#hacksense_status.status]).
 
@@ -78,7 +78,7 @@ status_to_open_closed(Status, Open, Closed) ->
         0 -> Closed
     end.
 
-timestamp_to_isofmt({{Y, Mo, D}, {H, Mn, S}}) ->
+timestamp_to_isofmt(#hacksense_status{timestamp={{Y, Mo, D}, {H, Mn, S}}}) ->
     io_lib:format(?ISO_DATETIME_FMT, [Y, Mo, D, H, Mn, S]).
 
 get_status() ->
