@@ -13,6 +13,7 @@
 -define(CT_TXT, {"text/plain", to_txt}).
 -define(CT_HTML, {"text/html", to_html}).
 
+
 %% Webmachine Resource functions
 
 init([Model, Format]) -> {ok, {Model, Format, fetch_model_data(Model)}}.
@@ -35,6 +36,7 @@ content_types_provided(ReqData, {_, txt, _} = State) -> {[?CT_TXT], ReqData, Sta
 content_types_provided(ReqData, State) ->
     {[?CT_HTML, ?CT_CSV, ?CT_RSS, ?CT_XML, ?CT_TXT], ReqData, State}.
 
+
 %% HTML
 
 to_html(ReqData, {Model, _, Data} = State) ->
@@ -50,6 +52,7 @@ dtl_params(status, Status) ->
     {OpenClosed, Since} = human_status(Status),
     [{open_closed, OpenClosed}, {since, Since}].
 
+
 %% CSV
 
 to_csv(ReqData, {status, _, Status} = State) ->
@@ -62,6 +65,7 @@ format_csv(Status) ->
     io_lib:format("~s;~s;~B\n",
         [Status#hacksense_status.id, Since, Status#hacksense_status.status]).
 
+
 %% TXT
 
 to_txt(ReqData, {status, _, Status} = State) ->
@@ -71,6 +75,7 @@ to_txt(ReqData, {status, _, Status} = State) ->
 to_txt(ReqData, {submit, _, _} = State) ->
     handle_submit(wrq:path_info(data, ReqData)),
     {"OK\n", ReqData, State}.
+
 
 %% RSS
 
@@ -84,6 +89,7 @@ to_rss(ReqData, {status, _, Status} = State) ->
                          {item, ItemContents}]},
     RSS = xmerl:export_simple([{rss, [{version, "2.0"}], [Channel]}], xmerl_xml),
     {RSS, ReqData, State}.
+
 
 %% XML
 
@@ -104,6 +110,7 @@ status_xml(S) ->
     {state_change, [{id, S#hacksense_status.id}, {'when', Since},
                     {what, S#hacksense_status.status}], []}.
 
+
 %% Common conversion functions
 
 human_status(Status) ->
@@ -121,6 +128,7 @@ status_to_open_closed(Status, Open, Closed) ->
 
 timestamp_to_isofmt(#hacksense_status{timestamp={{Y, Mo, D}, {H, Mn, S}}}) ->
     io_lib:format(?ISO_DATETIME_FMT, [Y, Mo, D, H, Mn, S]).
+
 
 %% Data access functions
 
