@@ -1,5 +1,5 @@
 -module(hacksense_resource).
--export([init/1, generate_etag/2, content_types_provided/2]).
+-export([init/1, generate_etag/2, content_types_provided/2, is_authorized/2]).
 -export([to_html/2, to_csv/2, to_rss/2, to_xml/2, to_txt/2]).
 
 -include_lib("webmachine/include/webmachine.hrl").
@@ -16,6 +16,10 @@
 %% Webmachine Resource functions
 
 init([Model, Format]) -> {ok, {Model, Format, fetch_model_data(Model)}}.
+
+is_authorized(ReqData, {submit, _, _} = State) ->
+    {check_submit_hmac(wrq:path_info(data, ReqData)), ReqData, State};
+is_authorized(ReqData, State) -> {true, ReqData, State}.
 
 generate_etag(ReqData, {_, history, History} = State) ->
     Digest = base64:encode_to_string(erlsha2:sha256(term_to_binary(History))),
@@ -140,10 +144,16 @@ get_date_ordered_statuses(OrderDir, Number) ->
     end),
     Rows.
 
-handle_submit(SubmitData) ->
+check_submit_hmac(SubmitData) ->
     [Id, Status, MAC] = string:tokens(SubmitData, "!"),
     Subject = lists:append([Id, "!", Status]),
-    MAC = mochihex:to_hex(hmac:hmac256(get_key(), Subject)),
+    case mochihex:to_hex(hmac:hmac256(get_key(), Subject)) of
+        MAC -> true;
+        _ -> "HackSense submission endpoint"
+    end.
+
+handle_submit(SubmitData) ->
+    [Id, Status, _MAC] = string:tokens(SubmitData, "!"),
     Object = #hacksense_status{id=Id, timestamp=calendar:local_time(),
                                status=list_to_integer(Status)},
     {atomic, ok} = mnesia:transaction(fun() -> mnesia:write(Object) end).
