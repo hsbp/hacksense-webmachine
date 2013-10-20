@@ -17,8 +17,10 @@ to_html(ReqData, State) ->
         "submit" ->
             handle_submit(wrq:disp_path(ReqData)), {"OK", "text/plain"};
         "history.csv" -> {csv_history(), "text/csv"};
+        "history.xml" -> {xml_history(), "text/xml"};
         "status.csv" -> {format_csv(get_status()), "text/csv"};
         "status.txt" -> {format_human(txt, get_status()), "text/plain"};
+        "status.xml" -> {format_xml(get_status()), "text/xml"};
         "status" -> {format_human(html, get_status()), "text/html"};
         A -> {io_lib:format("~p", [A]), "text/plain"} %% XXX debug
     end,
@@ -38,6 +40,19 @@ format_human(html, OpenClosed, Since) ->
     Content;
 format_human(txt, OpenClosed, Since) ->
     ["H.A.C.K. is currently ", OpenClosed, " since ", Since, "\n"].
+
+xml_history() ->
+    Children = lists:map(fun status_xml/1,
+                         get_date_ordered_statuses(ascending, all_remaining)),
+    xmerl:export_simple([{history, [], Children}], xmerl_xml).
+
+format_xml(Status) ->
+    xmerl:export_simple([{status, [], [status_xml(Status)]}], xmerl_xml).
+
+status_xml(S) ->
+    Since = lists:flatten(timestamp_to_isofmt(S#hacksense_status.timestamp)),
+    {state_change, [{id, S#hacksense_status.id}, {'when', Since},
+                    {what, integer_to_list(S#hacksense_status.status)}], []}.
 
 format_csv(Status) ->
     Since = timestamp_to_isofmt(Status#hacksense_status.timestamp),
