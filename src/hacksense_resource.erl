@@ -44,10 +44,10 @@ format_human(txt, OpenClosed, Since) ->
 xml_history() ->
     Children = lists:map(fun status_xml/1,
                          get_date_ordered_statuses(ascending, all_remaining)),
-    xmerl:export_simple([{history, [], Children}], xmerl_xml).
+    xmerl:export_simple([{history, Children}], xmerl_xml).
 
 format_xml(Status) ->
-    xmerl:export_simple([{status, [], [status_xml(Status)]}], xmerl_xml).
+    xmerl:export_simple([{status, [status_xml(Status)]}], xmerl_xml).
 
 status_xml(S) ->
     Since = lists:flatten(timestamp_to_isofmt(S#hacksense_status.timestamp)),
