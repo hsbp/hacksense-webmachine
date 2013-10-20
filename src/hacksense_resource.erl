@@ -16,12 +16,16 @@ to_html(ReqData, State) ->
     {Body, ContentType} = case wrq:path_info(base, ReqData) of
         "submit" ->
             handle_submit(wrq:disp_path(ReqData)), {"OK", "text/plain"};
+        "history.csv" -> {csv_history(), "text/csv"};
         "status.csv" -> {format_csv(get_status()), "text/csv"};
         "status.txt" -> {format_human(txt, get_status()), "text/plain"};
         "status" -> {format_human(html, get_status()), "text/html"};
         A -> {io_lib:format("~p", [A]), "text/plain"} %% XXX debug
     end,
     {Body, wrq:set_resp_header("Content-Type", ContentType, ReqData), State}.
+
+csv_history() ->
+    lists:map(fun format_csv/1, get_date_ordered_statuses(ascending, all_remaining)).
 
 format_human(Format, Status) ->
     OpenClosed = status_to_open_closed(Status),
