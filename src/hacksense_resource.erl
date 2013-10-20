@@ -21,6 +21,7 @@ to_html(ReqData, State) ->
         "status.csv" -> {format_csv(get_status()), "text/csv"};
         "status.txt" -> {format_human(txt, get_status()), "text/plain"};
         "status.xml" -> {format_xml(get_status()), "text/xml"};
+        "status.rss" -> {format_rss(get_status()), "application/rss+xml"};
         "status" -> {format_human(html, get_status()), "text/html"};
         A -> {io_lib:format("~p", [A]), "text/plain"} %% XXX debug
     end,
@@ -33,6 +34,16 @@ format_human(Format, Status) ->
     OpenClosed = status_to_open_closed(Status),
     Since = timestamp_to_isofmt(Status#hacksense_status.timestamp),
     format_human(Format, OpenClosed, Since).
+
+format_rss(Status) ->
+    ItemContents = [{title, ["H.A.C.K. has ", status_to_open_closed(Status, "opened", "closed")]},
+                   {guid, ["http://vsza.hu/hacksense/state_changes/", Status#hacksense_status.id]},
+                   {pubDate, [webmachine_util:rfc1123_date(Status#hacksense_status.timestamp)]}],
+    Channel = {channel, [{title, ["State Changes/rss"]},
+                         {link, ["http://vsza.hu/hacksense/"]},
+                          description,
+                         {item, ItemContents}]},
+    xmerl:export_simple([{rss, [{version, "2.0"}], [Channel]}], xmerl_xml).
 
 format_human(html, OpenClosed, Since) ->
     {ok, Content} = status_html_dtl:render(
@@ -52,7 +63,7 @@ format_xml(Status) ->
 status_xml(S) ->
     Since = lists:flatten(timestamp_to_isofmt(S#hacksense_status.timestamp)),
     {state_change, [{id, S#hacksense_status.id}, {'when', Since},
-                    {what, integer_to_list(S#hacksense_status.status)}], []}.
+                    {what, S#hacksense_status.status}], []}.
 
 format_csv(Status) ->
     Since = timestamp_to_isofmt(Status#hacksense_status.timestamp),
@@ -60,9 +71,11 @@ format_csv(Status) ->
         [Status#hacksense_status.id, Since, Status#hacksense_status.status]).
 
 status_to_open_closed(Status) ->
+    status_to_open_closed(Status, "open", "closed").
+status_to_open_closed(Status, Open, Closed) ->
     case Status#hacksense_status.status of
-        1 -> "open";
-        0 -> "closed"
+        1 -> Open;
+        0 -> Closed
     end.
 
 timestamp_to_isofmt({{Y, Mo, D}, {H, Mn, S}}) ->
