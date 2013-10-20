@@ -12,6 +12,7 @@
 -define(CT_XML, {"text/xml", to_xml}).
 -define(CT_TXT, {"text/plain", to_txt}).
 -define(CT_HTML, {"text/html", to_html}).
+-define(CSV_HEAD, "ID;Timestamp;Status\n").
 
 
 %% Webmachine Resource functions
@@ -58,7 +59,7 @@ dtl_params(status, Status) ->
 to_csv(ReqData, {status, _, Status} = State) ->
     {format_csv(Status), ReqData, State};
 to_csv(ReqData, {history, _, History} = State) ->
-    {lists:map(fun format_csv/1, History), ReqData, State}.
+    {[?CSV_HEAD | lists:map(fun format_csv/1, History)], ReqData, State}.
 
 format_csv(Status) ->
     Since = timestamp_to_isofmt(Status),
