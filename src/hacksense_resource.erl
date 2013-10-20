@@ -164,7 +164,12 @@ handle_submit(SubmitData) ->
     [Id, Status, _MAC] = string:tokens(SubmitData, "!"),
     Object = #hacksense_status{id=Id, timestamp=calendar:local_time(),
                                status=list_to_integer(Status)},
-    {atomic, ok} = mnesia:transaction(fun() -> mnesia:write(Object) end).
+    {atomic, ok} = mnesia:transaction(fun() ->
+         case mnesia:read(hacksense_status, Id) of
+             [] -> mnesia:write(Object);
+             _ -> ok
+         end
+    end).
 
 get_key() ->
     FileName = filename:join(code:priv_dir(hacksense), "hacksense.key"),
