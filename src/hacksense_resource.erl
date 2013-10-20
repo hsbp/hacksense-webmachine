@@ -21,10 +21,10 @@ is_authorized(ReqData, {submit, _, _} = State) ->
     {check_submit_hmac(wrq:path_info(data, ReqData)), ReqData, State};
 is_authorized(ReqData, State) -> {true, ReqData, State}.
 
-generate_etag(ReqData, {_, history, History} = State) ->
+generate_etag(ReqData, {history, _, History} = State) ->
     Digest = base64:encode_to_string(erlsha2:sha256(term_to_binary(History))),
     {Digest, ReqData, State};
-generate_etag(ReqData, {_, status, Status} = State) ->
+generate_etag(ReqData, {status, _, Status} = State) ->
     {Status#hacksense_status.id, ReqData, State};
 generate_etag(ReqData, State) -> {undefined, ReqData, State}.
 
