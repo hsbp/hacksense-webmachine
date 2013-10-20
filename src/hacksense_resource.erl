@@ -18,6 +18,7 @@ to_html(ReqData, State) ->
             handle_submit(wrq:disp_path(ReqData)), {"OK", "text/plain"};
         "history.csv" -> {csv_history(), "text/csv"};
         "history.xml" -> {xml_history(), "text/xml"};
+        "history" -> {html_history(), "text/html"};
         "status.csv" -> {format_csv(get_status()), "text/csv"};
         "status.txt" -> {format_human(txt, get_status()), "text/plain"};
         "status.xml" -> {format_xml(get_status()), "text/xml"};
@@ -26,6 +27,12 @@ to_html(ReqData, State) ->
         A -> {io_lib:format("~p", [A]), "text/plain"} %% XXX debug
     end,
     {Body, wrq:set_resp_header("Content-Type", ContentType, ReqData), State}.
+
+html_history() ->
+    Events = [{S#hacksense_status.id, timestamp_to_isofmt(S), status_to_open_closed(S)}
+              || S <- get_date_ordered_statuses(ascending, all_remaining)],
+    {ok, Content} = history_html_dtl:render([{events, Events}]),
+    Content.
 
 csv_history() ->
     lists:map(fun format_csv/1, get_date_ordered_statuses(ascending, all_remaining)).

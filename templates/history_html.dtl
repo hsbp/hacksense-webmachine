@@ -1,0 +1,17 @@
+{% extends "hacksense_layout.dtl" %}
+{% block content %}
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Timestamp</th>
+        <th>Status</th>
+    </tr>
+    {% for id, timestamp, status in events %}
+    <tr>
+        <td class="uuid">{{ id }}</td>
+        <td>{{ timestamp }}</td>
+        <td class="{{ status }}">{{ status | capfirst }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}
