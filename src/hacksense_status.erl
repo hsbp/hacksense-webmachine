@@ -47,10 +47,8 @@ to_html(ReqData, {_, Status} = State) ->
 to_json(ReqData, {status, Status} = State) ->
     {mochijson2:encode(item_to_json(Status)), ReqData, State}.
 
-item_to_json(S) ->
-    [{id, S#status.id},
-     {timestamp, S#status.timestamp},
-     {status, S#status.status == ?STATUS_OPEN}].
+item_to_json(#status{id=Id, timestamp=TS, status=S}) ->
+    [{id, Id}, {timestamp, TS}, {status, S == ?STATUS_OPEN}].
 
 
 %% CSV
@@ -58,9 +56,7 @@ item_to_json(S) ->
 to_csv(ReqData, {_, Status} = State) ->
     {item_to_csv(Status), ReqData, State}.
 
-item_to_csv(Status) ->
-    [Status#status.id, $;, Status#status.timestamp, $;,
-     Status#status.status, $\n].
+item_to_csv(#status{id=Id, timestamp=TS, status=S}) -> [Id, $;, TS, $;, S, $\n].
 
 
 %% TXT
@@ -116,9 +112,8 @@ to_xml(ReqData, {_, Status} = State) ->
     XML = xmerl:export_simple([{status, [item_to_xml(Status)]}], xmerl_xml),
     {XML, ReqData, State}.
 
-item_to_xml(S) ->
-    {state_change, [{id, S#status.id}, {'when', S#status.timestamp},
-                    {what, S#status.status}], []}.
+item_to_xml(#status{id=Id, timestamp=TS, status=S}) ->
+    {state_change, [{id, Id}, {'when', TS}, {what, S}], []}.
 
 
 %% Common conversion functions
