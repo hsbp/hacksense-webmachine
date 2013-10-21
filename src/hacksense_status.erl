@@ -44,7 +44,7 @@ to_html(ReqData, {_, Status} = State) ->
 
 %% JSON
 
-to_json(ReqData, {status, Status} = State) ->
+to_json(ReqData, {_, Status} = State) ->
     {mochijson2:encode(item_to_json(Status)), ReqData, State}.
 
 item_to_json(#status{id=Id, timestamp=TS, status=S}) ->
