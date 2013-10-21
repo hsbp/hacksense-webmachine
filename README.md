@@ -1,7 +1,7 @@
 HackSense REST API
 ==================
 
-Rest api for the HackSense system: http://hsbp.org/HackSense
+REST API for the HackSense system: http://hsbp.org/HackSense
 
 Dependencies
 ------------
