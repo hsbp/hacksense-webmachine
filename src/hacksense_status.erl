@@ -87,12 +87,12 @@ to_rss(ReqData, {_, Status} = State) ->
 
 %% EEML
 
-to_eeml(ReqData, {_, S} = State) ->
+to_eeml(ReqData, {_, #status{timestamp=TimeStamp, status=Status}} = State) ->
     Location = {location, [{exposure, "indoor"}, {domain, "physical"}, {disposition, "fixed"}],
                 [{name, ["Hackerspace BP"]}, {lat, ["47.489196"]}, {lon, ["19.059512"]}, {ele, ["117"]}]},
-    Value = {value, [{minValue, "0.0"}, {maxValue, "1.0"}], [[S#status.status]]},
+    Value = {value, [{minValue, "0.0"}, {maxValue, "1.0"}], [[Status]]},
     Data = {data, [{id, 0}], [{tag, ["status code"]}, {tag, ["hackerspace opening"]}, Value]},
-    Env = {environment, [{updated, binary:replace(S#status.timestamp, <<" ">>, <<$T>>)}],
+    Env = {environment, [{updated, binary:replace(TimeStamp, <<" ">>, <<$T>>)}],
            [{title, ["Hacksense Budapest"]}, {feed, ["http://vsza.hu/hacksense/eeml_status.xml"]},
             {status, ["live"]}, {description, ["Hacksense Hackerspace Budapest"]},
             {icon, ["http://www.hsbp.org/icon.png"]}, {website, ["http://www.hsbp.org/"]},
