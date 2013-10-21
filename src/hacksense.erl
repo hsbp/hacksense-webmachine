@@ -57,13 +57,9 @@ import_remote_csv(URL) ->
     {atomic, ok} = mnesia:transaction(fun () ->
         lists:foreach(fun import_csv_line/1, Lines) end).
 
-import_csv_line(
-    <<Id:36/binary, $;, Y:4/binary, $-, Mo:2/binary, $-, D:2/binary, $\x20,
-      H:2/binary, $:, Mi:2/binary, $:, S:2/binary, $;, Status:1/binary>>) ->
-    Date = {binary_to_integer(Y), binary_to_integer(Mo), binary_to_integer(D)},
-    Time = {binary_to_integer(H), binary_to_integer(Mi), binary_to_integer(S)},
-    Object = #hacksense_status{id=binary_to_list(Id), timestamp={Date, Time},
-                               status=binary_to_integer(Status)},
+import_csv_line(<<Id:36/binary, $;, TimeStamp:19/binary, $;, Status:1/binary>>) ->
+    Object = #hacksense_status{id=Id, timestamp=TimeStamp,
+                               status=Status},
     mnesia:write(Object).
 
 %% @spec stop() -> ok
