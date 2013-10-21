@@ -48,7 +48,7 @@ to_json(ReqData, {_, Status} = State) ->
     {mochijson2:encode(item_to_json(Status)), ReqData, State}.
 
 item_to_json(#status{id=Id, timestamp=TS, status=S}) ->
-    [{id, Id}, {timestamp, TS}, {status, S == ?STATUS_OPEN}].
+    [{id, Id}, {'when', TS}, {what, S == ?STATUS_OPEN}].
 
 
 %% CSV
