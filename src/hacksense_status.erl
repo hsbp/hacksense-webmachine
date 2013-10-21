@@ -1,7 +1,7 @@
 -module(hacksense_status).
 -export([init/1, generate_etag/2, content_types_provided/2]).
 -export([to_html/2, to_csv/2, to_rss/2, to_xml/2, to_txt/2, to_json/2, to_eeml/2]).
--export([status_to_json/1, format_csv/1, status_xml/1, status_to_hacksense_status/1, human_status/1, status_to_open_closed/1]).
+-export([item_to_json/1, item_to_csv/1, item_to_xml/1, item_from_db/1, human_repr/1, open_closed/1]).
 
 -include_lib("webmachine/include/webmachine.hrl").
 -include_lib("stdlib/include/qlc.hrl").
@@ -36,7 +36,7 @@ content_types_provided(ReqData, State) ->
 %% HTML
 
 to_html(ReqData, {_, Status} = State) ->
-    {OpenClosed, Since} = human_status(Status),
+    {OpenClosed, Since} = human_repr(Status),
     {ok, Content} = status_dtl:render([{open_closed, OpenClosed}, {since, Since}]),
     {Content, ReqData, State}.
 
@@ -44,9 +44,9 @@ to_html(ReqData, {_, Status} = State) ->
 %% JSON
 
 to_json(ReqData, {status, Status} = State) ->
-    {mochijson2:encode(status_to_json(Status)), ReqData, State}.
+    {mochijson2:encode(item_to_json(Status)), ReqData, State}.
 
-status_to_json(S) ->
+item_to_json(S) ->
     [{id, S#status.id},
      {timestamp, S#status.timestamp},
      {status, S#status.status == <<$1>>}].
@@ -55,9 +55,9 @@ status_to_json(S) ->
 %% CSV
 
 to_csv(ReqData, {_, Status} = State) ->
-    {format_csv(Status), ReqData, State}.
+    {item_to_csv(Status), ReqData, State}.
 
-format_csv(Status) ->
+item_to_csv(Status) ->
     [Status#status.id, $;, Status#status.timestamp, $;,
      Status#status.status, $\n].
 
@@ -65,7 +65,7 @@ format_csv(Status) ->
 %% TXT
 
 to_txt(ReqData, {_, Status} = State) ->
-    {OpenClosed, Since} = human_status(Status),
+    {OpenClosed, Since} = human_repr(Status),
     Content = ["H.A.C.K. is currently ", OpenClosed, " since ", Since, "\n"],
     {Content, ReqData, State}.
 
@@ -77,7 +77,7 @@ to_rss(ReqData, {_, Status} = State) ->
       H:2/binary, $:, Mi:2/binary, $:, S:2/binary>> = Status#status.timestamp,
     Date = {binary_to_integer(Y), binary_to_integer(Mo), binary_to_integer(D)},
     Time = {binary_to_integer(H), binary_to_integer(Mi), binary_to_integer(S)},
-    ItemContents = [{title, ["H.A.C.K. has ", status_to_open_closed(Status, "opened", "closed")]},
+    ItemContents = [{title, ["H.A.C.K. has ", open_closed(Status, "opened", "closed")]},
                    {guid, ["http://vsza.hu/hacksense/state_changes/", [Status#status.id]]},
                    {pubDate, [webmachine_util:rfc1123_date({Date, Time})]}],
     Channel = {channel, [{title, ["State Changes/rss"]},
@@ -112,24 +112,24 @@ to_eeml(ReqData, {_, S} = State) ->
 %% XML
 
 to_xml(ReqData, {_, Status} = State) ->
-    XML = xmerl:export_simple([{status, [status_xml(Status)]}], xmerl_xml),
+    XML = xmerl:export_simple([{status, [item_to_xml(Status)]}], xmerl_xml),
     {XML, ReqData, State}.
 
-status_xml(S) ->
+item_to_xml(S) ->
     {state_change, [{id, S#status.id}, {'when', S#status.timestamp},
                     {what, S#status.status}], []}.
 
 
 %% Common conversion functions
 
-human_status(Status) ->
-    OpenClosed = status_to_open_closed(Status),
+human_repr(Status) ->
+    OpenClosed = open_closed(Status),
     Since = Status#status.timestamp,
     {OpenClosed, Since}.
 
-status_to_open_closed(Status) ->
-    status_to_open_closed(Status, "open", "closed").
-status_to_open_closed(Status, Open, Closed) ->
+open_closed(Status) ->
+    open_closed(Status, "open", "closed").
+open_closed(Status, Open, Closed) ->
     case Status#status.status of
         <<$1>> -> Open;
         <<$0>> -> Closed
@@ -143,7 +143,7 @@ fetch_model_data() ->
         mnesia:transaction(fun() ->
             mnesia:read(hacksense_status, mnesia:last(hacksense_status))
         end),
-    status_to_hacksense_status(Status).
+    item_from_db(Status).
 
-status_to_hacksense_status(#hacksense_status{timestamp_id={TS, Id}, status=S}) ->
+item_from_db(#hacksense_status{timestamp_id={TS, Id}, status=S}) ->
     #status{id=Id, timestamp=TS, status=S}.

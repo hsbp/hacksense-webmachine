@@ -32,26 +32,26 @@ content_types_provided(ReqData, State) ->
 
 to_html(ReqData, {_, History} = State) ->
     {ok, Content} = history_dtl:render([{events, [
-        {S#status.id, S#status.timestamp, hacksense_status:status_to_open_closed(S)} || S <- History]}]),
+        {S#status.id, S#status.timestamp, hacksense_status:open_closed(S)} || S <- History]}]),
     {Content, ReqData, State}.
 
 
 %% JSON
 
 to_json(ReqData, {_, History} = State) ->
-    {mochijson2:encode(lists:map(fun hacksense_status:status_to_json/1, History)), ReqData, State}.
+    {mochijson2:encode(lists:map(fun hacksense_status:item_to_json/1, History)), ReqData, State}.
 
 
 %% CSV
 
 to_csv(ReqData, {_, History} = State) ->
-    {[?CSV_HEAD | lists:map(fun hacksense_status:format_csv/1, History)], ReqData, State}.
+    {[?CSV_HEAD | lists:map(fun hacksense_status:item_to_csv/1, History)], ReqData, State}.
 
 
 %% XML
 
 to_xml(ReqData, {_, History} = State) ->
-    Children = lists:map(fun hacksense_status:status_xml/1, History),
+    Children = lists:map(fun hacksense_status:item_to_xml/1, History),
     XML = xmerl:export_simple([{history, Children}], xmerl_xml),
     {XML, ReqData, State}.
 
@@ -60,6 +60,6 @@ to_xml(ReqData, {_, History} = State) ->
 
 fetch_model_data() ->
     {atomic, History} = mnesia:transaction(fun() ->
-       qlc:e(qlc:q([hacksense_status:status_to_hacksense_status(R) || R <- mnesia:table(hacksense_status)]))
+       qlc:e(qlc:q([hacksense_status:item_from_db(R) || R <- mnesia:table(hacksense_status)]))
     end),
     History.
