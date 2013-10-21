@@ -19,7 +19,12 @@
 
 %% Webmachine Resource functions
 
-init([Format]) -> {ok, {Format, fetch_model_data()}}.
+init([Format]) ->
+    {atomic, [Status]} =
+        mnesia:transaction(fun() ->
+            mnesia:read(hacksense_status, mnesia:last(hacksense_status))
+        end),
+    {ok, {Format, item_from_db(Status)}}.
 
 generate_etag(ReqData, {_, Status} = State) ->
     {binary_to_list(Status#status.id), ReqData, State}.
@@ -127,16 +132,6 @@ open_closed(Status) ->
     open_closed(Status, "open", "closed").
 open_closed(#status{status=?STATUS_OPEN}, Open, _) -> Open;
 open_closed(_, _, Closed) -> Closed.
-
-
-%% Data access functions
-
-fetch_model_data() ->
-    {atomic, [Status]} =
-        mnesia:transaction(fun() ->
-            mnesia:read(hacksense_status, mnesia:last(hacksense_status))
-        end),
-    item_from_db(Status).
 
 item_from_db(#hacksense_status{timestamp_id={TS, Id}, status=S}) ->
     #status{id=Id, timestamp=TS, status=S}.

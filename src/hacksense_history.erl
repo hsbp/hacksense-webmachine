@@ -15,7 +15,11 @@
 
 %% Webmachine Resource functions
 
-init([Format]) -> {ok, {Format, fetch_model_data()}}.
+init([Format]) ->
+    {atomic, History} = mnesia:transaction(fun() ->
+       qlc:e(qlc:q([hacksense_status:item_from_db(R) || R <- mnesia:table(hacksense_status)]))
+    end),
+    {ok, {Format, History}}.
 
 generate_etag(ReqData, {_, History} = State) ->
     Digest = base64:encode_to_string(erlsha2:sha256(term_to_binary(History))),
@@ -54,12 +58,3 @@ to_xml(ReqData, {_, History} = State) ->
     Children = lists:map(fun hacksense_status:item_to_xml/1, History),
     XML = xmerl:export_simple([{history, Children}], xmerl_xml),
     {XML, ReqData, State}.
-
-
-%% Data access functions
-
-fetch_model_data() ->
-    {atomic, History} = mnesia:transaction(fun() ->
-       qlc:e(qlc:q([hacksense_status:item_from_db(R) || R <- mnesia:table(hacksense_status)]))
-    end),
-    History.
