@@ -184,7 +184,7 @@ fetch_model_data(status) ->
     status_to_hacksense_status(Status);
 fetch_model_data(history) ->
     {atomic, History} = mnesia:transaction(fun() ->
-        mnesia:foldr(fun(R, A) -> [status_to_hacksense_status(R) | A] end, [], hacksense_status)
+        qlc:e(qlc:q([status_to_hacksense_status(R) || R <- mnesia:table(hacksense_status)]))
     end),
     History;
 fetch_model_data(_) -> undefined.
