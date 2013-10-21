@@ -1,1 +1,2 @@
--record(hacksense_status, {id, timestamp, status}).
+-record(hacksense_status, {timestamp_id, status}).
+-record(status, {id, timestamp, status}).

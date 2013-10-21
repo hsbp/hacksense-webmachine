@@ -44,7 +44,7 @@ start() ->
     application:start(hacksense).
 
 init_schema() ->
-    case mnesia:create_table(hacksense_status, [
+    case mnesia:create_table(hacksense_status, [{type, ordered_set},
         {attributes, record_info(fields, hacksense_status)}, {disc_copies, [node()]}]) of
         {atomic, ok} -> ok;
         {aborted, {already_exists, hacksense_status}} -> ok
@@ -58,8 +58,7 @@ import_remote_csv(URL) ->
         lists:foreach(fun import_csv_line/1, Lines) end).
 
 import_csv_line(<<Id:36/binary, $;, TimeStamp:19/binary, $;, Status:1/binary>>) ->
-    Object = #hacksense_status{id=Id, timestamp=TimeStamp,
-                               status=Status},
+    Object = #hacksense_status{timestamp_id={TimeStamp, Id}, status=Status},
     mnesia:write(Object).
 
 %% @spec stop() -> ok

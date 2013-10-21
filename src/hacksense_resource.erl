@@ -32,7 +32,7 @@ generate_etag(ReqData, {history, _, History} = State) ->
     Digest = base64:encode_to_string(erlsha2:sha256(term_to_binary(History))),
     {Digest, ReqData, State};
 generate_etag(ReqData, {status, _, Status} = State) ->
-    {binary_to_list(Status#hacksense_status.id), ReqData, State};
+    {binary_to_list(Status#status.id), ReqData, State};
 generate_etag(ReqData, State) -> {undefined, ReqData, State}.
 
 content_types_provided(ReqData, {_, csv, _} = State) -> {[?CT_CSV], ReqData, State};
@@ -54,7 +54,7 @@ to_html(ReqData, {Model, _, Data} = State) ->
 
 dtl_params(home, _) -> [];
 dtl_params(history, History) ->
-    [{events, [{S#hacksense_status.id, S#hacksense_status.timestamp,
+    [{events, [{S#status.id, S#status.timestamp,
                status_to_open_closed(S)} || S <- History]}];
 dtl_params(status, Status) ->
     {OpenClosed, Since} = human_status(Status),
@@ -69,9 +69,9 @@ to_json(ReqData, {history, _, History} = State) ->
     {mochijson2:encode(lists:map(fun status_to_json/1, History)), ReqData, State}.
 
 status_to_json(S) ->
-    [{id, S#hacksense_status.id},
-     {timestamp, S#hacksense_status.timestamp},
-     {status, S#hacksense_status.status == <<$1>>}].
+    [{id, S#status.id},
+     {timestamp, S#status.timestamp},
+     {status, S#status.status == <<$1>>}].
 
 
 %% CSV
@@ -82,8 +82,8 @@ to_csv(ReqData, {history, _, History} = State) ->
     {[?CSV_HEAD | lists:map(fun format_csv/1, History)], ReqData, State}.
 
 format_csv(Status) ->
-    [Status#hacksense_status.id, $;, Status#hacksense_status.timestamp, $;,
-     Status#hacksense_status.status, $\n].
+    [Status#status.id, $;, Status#status.timestamp, $;,
+     Status#status.status, $\n].
 
 
 %% TXT
@@ -101,11 +101,11 @@ to_txt(ReqData, {submit, _, Submission} = State) ->
 
 to_rss(ReqData, {status, _, Status} = State) ->
     <<Y:4/binary, $-, Mo:2/binary, $-, D:2/binary, $\x20,
-      H:2/binary, $:, Mi:2/binary, $:, S:2/binary>> = Status#hacksense_status.timestamp,
+      H:2/binary, $:, Mi:2/binary, $:, S:2/binary>> = Status#status.timestamp,
     Date = {binary_to_integer(Y), binary_to_integer(Mo), binary_to_integer(D)},
     Time = {binary_to_integer(H), binary_to_integer(Mi), binary_to_integer(S)},
     ItemContents = [{title, ["H.A.C.K. has ", status_to_open_closed(Status, "opened", "closed")]},
-                   {guid, ["http://vsza.hu/hacksense/state_changes/", [Status#hacksense_status.id]]},
+                   {guid, ["http://vsza.hu/hacksense/state_changes/", [Status#status.id]]},
                    {pubDate, [webmachine_util:rfc1123_date({Date, Time})]}],
     Channel = {channel, [{title, ["State Changes/rss"]},
                          {link, ["http://vsza.hu/hacksense/"]},
@@ -120,9 +120,9 @@ to_rss(ReqData, {status, _, Status} = State) ->
 to_eeml(ReqData, {status, _, S} = State) ->
     Location = {location, [{exposure, "indoor"}, {domain, "physical"}, {disposition, "fixed"}],
                 [{name, ["Hackerspace BP"]}, {lat, ["47.489196"]}, {lon, ["19.059512"]}, {ele, ["117"]}]},
-    Value = {value, [{minValue, "0.0"}, {maxValue, "1.0"}], [[S#hacksense_status.status]]},
+    Value = {value, [{minValue, "0.0"}, {maxValue, "1.0"}], [[S#status.status]]},
     Data = {data, [{id, 0}], [{tag, ["status code"]}, {tag, ["hackerspace opening"]}, Value]},
-    Env = {environment, [{updated, binary:replace(S#hacksense_status.timestamp, <<" ">>, <<$T>>)}],
+    Env = {environment, [{updated, binary:replace(S#status.timestamp, <<" ">>, <<$T>>)}],
            [{title, ["Hacksense Budapest"]}, {feed, ["http://vsza.hu/hacksense/eeml_status.xml"]},
             {status, ["live"]}, {description, ["Hacksense Hackerspace Budapest"]},
             {icon, ["http://www.hsbp.org/icon.png"]}, {website, ["http://www.hsbp.org/"]},
@@ -151,21 +151,21 @@ format_xml(Status) ->
     xmerl:export_simple([{status, [status_xml(Status)]}], xmerl_xml).
 
 status_xml(S) ->
-    {state_change, [{id, S#hacksense_status.id}, {'when', S#hacksense_status.timestamp},
-                    {what, S#hacksense_status.status}], []}.
+    {state_change, [{id, S#status.id}, {'when', S#status.timestamp},
+                    {what, S#status.status}], []}.
 
 
 %% Common conversion functions
 
 human_status(Status) ->
     OpenClosed = status_to_open_closed(Status),
-    Since = Status#hacksense_status.timestamp,
+    Since = Status#status.timestamp,
     {OpenClosed, Since}.
 
 status_to_open_closed(Status) ->
     status_to_open_closed(Status, "open", "closed").
 status_to_open_closed(Status, Open, Closed) ->
-    case Status#hacksense_status.status of
+    case Status#status.status of
         <<$1>> -> Open;
         <<$0>> -> Closed
     end.
@@ -177,25 +177,20 @@ timestamp_to_isofmt({{Y, Mo, D}, {H, Mn, S}}) ->
 %% Data access functions
 
 fetch_model_data(status) ->
-    case get_date_ordered_statuses(descending, 1) of
-         [Top1] -> Top1;
-         [] -> undefined;
-         Error -> Error
-    end;
+    {atomic, [Status]} =
+        mnesia:transaction(fun() ->
+            mnesia:read(hacksense_status, mnesia:last(hacksense_status))
+        end),
+    status_to_hacksense_status(Status);
 fetch_model_data(history) ->
-    get_date_ordered_statuses(ascending, all_remaining);
+    {atomic, History} = mnesia:transaction(fun() ->
+        mnesia:foldr(fun(R, A) -> [status_to_hacksense_status(R) | A] end, [], hacksense_status)
+    end),
+    History;
 fetch_model_data(_) -> undefined.
 
-get_date_ordered_statuses(OrderDir, Number) ->
-    {atomic, Rows} = mnesia:transaction(fun() ->
-        TH = mnesia:table(hacksense_status),
-        Q = qlc:q([X || X <- TH]),
-        QS1 = qlc:keysort(#hacksense_status.id, Q, [{order, ascending}]),
-        QS = qlc:keysort(#hacksense_status.timestamp, QS1, [{order, OrderDir}]),
-        QC = qlc:cursor(QS),
-        qlc:next_answers(QC, Number)
-    end),
-    Rows.
+status_to_hacksense_status(#hacksense_status{timestamp_id={TS, Id}, status=S}) ->
+    #status{id=Id, timestamp=TS, status=S}.
 
 check_submit_hmac(SubmitData) ->
     [Id, Status, MAC] = binary:split(SubmitData, <<$!>>, [global]),
@@ -207,9 +202,9 @@ check_submit_hmac(SubmitData) ->
 
 handle_submit({Id, Status}) ->
 	IsoDateTime = list_to_binary(timestamp_to_isofmt(calendar:local_time())),
-    Object = #hacksense_status{id=Id, timestamp=IsoDateTime, status=Status},
+    Object = #hacksense_status{timestamp_id={IsoDateTime, Id}, status=Status},
     {atomic, ok} = mnesia:transaction(fun() ->
-         case mnesia:read(hacksense_status, Id) of
+         case mnesia:match_object(#hacksense_status{timestamp_id={'_', Id}, status='_'}) of
              [] -> mnesia:write(Object);
              _ -> ok
          end
