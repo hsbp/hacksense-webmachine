@@ -14,6 +14,7 @@
 -define(CT_JSON, {"application/json", to_json}).
 -define(CT_HTML, {"text/html", to_html}).
 -define(CT_EEML, {"text/xml", to_eeml}).
+-define(STATUS_OPEN, <<$1>>).
 
 
 %% Webmachine Resource functions
@@ -49,7 +50,7 @@ to_json(ReqData, {status, Status} = State) ->
 item_to_json(S) ->
     [{id, S#status.id},
      {timestamp, S#status.timestamp},
-     {status, S#status.status == <<$1>>}].
+     {status, S#status.status == ?STATUS_OPEN}].
 
 
 %% CSV
@@ -129,11 +130,8 @@ human_repr(Status) ->
 
 open_closed(Status) ->
     open_closed(Status, "open", "closed").
-open_closed(Status, Open, Closed) ->
-    case Status#status.status of
-        <<$1>> -> Open;
-        <<$0>> -> Closed
-    end.
+open_closed(#status{status=?STATUS_OPEN}, Open, _) -> Open;
+open_closed(_, _, Closed) -> Closed.
 
 
 %% Data access functions
