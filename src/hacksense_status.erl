@@ -75,13 +75,10 @@ to_txt(ReqData, {_, Status} = State) ->
 %% RSS
 
 to_rss(ReqData, {_, Status} = State) ->
-    <<Y:4/binary, $-, Mo:2/binary, $-, D:2/binary, $\x20,
-      H:2/binary, $:, Mi:2/binary, $:, S:2/binary>> = Status#status.timestamp,
-    Date = {binary_to_integer(Y), binary_to_integer(Mo), binary_to_integer(D)},
-    Time = {binary_to_integer(H), binary_to_integer(Mi), binary_to_integer(S)},
+    TS = timestamp_to_erlang_fmt(Status#status.timestamp),
     ItemContents = [{title, ["H.A.C.K. has ", open_closed(Status, "opened", "closed")]},
                    {guid, ["http://vsza.hu/hacksense/state_changes/", [Status#status.id]]},
-                   {pubDate, [webmachine_util:rfc1123_date({Date, Time})]}],
+                   {pubDate, [webmachine_util:rfc1123_date(TS)]}],
     Channel = {channel, [{title, ["State Changes/rss"]},
                          {link, ["http://vsza.hu/hacksense/"]},
                           description,
@@ -122,6 +119,12 @@ item_to_xml(#status{id=Id, timestamp=TS, status=S}) ->
 
 
 %% Common conversion functions
+
+timestamp_to_erlang_fmt(<<Y:4/binary, $-, Mo:2/binary, $-, D:2/binary, $\x20,
+                          H:2/binary, $:, Mi:2/binary, $:, S:2/binary>>) ->
+    Date = {binary_to_integer(Y), binary_to_integer(Mo), binary_to_integer(D)},
+    Time = {binary_to_integer(H), binary_to_integer(Mi), binary_to_integer(S)},
+    {Date, Time}.
 
 human_repr(Status) ->
     OpenClosed = open_closed(Status),
