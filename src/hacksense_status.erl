@@ -1,6 +1,6 @@
 -module(hacksense_status).
 -export([init/1, generate_etag/2, content_types_provided/2]).
--export([to_html/2, to_csv/2, to_rss/2, to_xml/2, to_txt/2, to_json/2, to_eeml/2]).
+-export([to_html/2, to_csv/2, to_rss/2, to_xml/2, to_txt/2, to_json/2, to_eeml/2, to_spaceapi/2]).
 -export([item_to_json/1, item_to_csv/1, item_to_xml/1, item_from_db/1, human_repr/1, open_closed/1]).
 
 -include_lib("webmachine/include/webmachine.hrl").
@@ -14,6 +14,7 @@
 -define(CT_JSON, {"application/json", to_json}).
 -define(CT_HTML, {"text/html", to_html}).
 -define(CT_EEML, {"text/xml", to_eeml}).
+-define(CT_SPACEAPI, {"application/json", to_spaceapi}).
 -define(STATUS_OPEN, <<$1>>).
 
 
@@ -35,6 +36,7 @@ content_types_provided(ReqData, {xml, _} = State) -> {[?CT_XML], ReqData, State}
 content_types_provided(ReqData, {txt, _} = State) -> {[?CT_TXT], ReqData, State};
 content_types_provided(ReqData, {json, _} = State) -> {[?CT_JSON], ReqData, State};
 content_types_provided(ReqData, {eeml, _} = State) -> {[?CT_EEML], ReqData, State};
+content_types_provided(ReqData, {spaceapi, _} = State) -> {[?CT_SPACEAPI], ReqData, State};
 content_types_provided(ReqData, State) ->
     {[?CT_HTML, ?CT_CSV, ?CT_RSS, ?CT_XML, ?CT_TXT, ?CT_JSON], ReqData, State}.
 
@@ -116,6 +118,28 @@ to_xml(ReqData, {_, Status} = State) ->
 
 item_to_xml(#status{id=Id, timestamp=TS, status=S}) ->
     {state_change, [{id, Id}, {'when', TS}, {what, S}], []}.
+
+
+%% Space API
+
+to_spaceapi(ReqData, {_, Status} = State) ->
+    {mochijson2:encode(item_to_spaceapi(Status)), ReqData, State}.
+
+item_to_spaceapi(#status{status=S, timestamp=TS}) ->
+    Location = [{address, <<"Bástya u. 12., 1056 Budapest, Hungary">>},
+                {lon, 47.489167}, {lat, 19.059444}],
+    Projects = [<<"https://github.com/hsbp">>,
+                <<"http://hsbp.org/projects">>, <<"http://hsbp.org/hwprojektek">>],
+    Contact = [{email, <<"hack@hsbp.org">>}, {irc, <<"irc://irc.atw-inter.net/hspbp">>},
+               {ml, <<"hspbp@googlegroups.com">>}, {twitter, <<"@hackerspacebp">>},
+               {phone, <<"+36 1 445 4225">>}, {jabber, <<"hack@conference.xmpp.hsbp.org">>},
+               {facebook, <<"https://www.facebook.com/hackerspace.budapest">>}],
+    [UTC | _] = calendar:local_time_to_universal_time_dst(timestamp_to_erlang_fmt(TS)),
+    State = [{open, S == ?STATUS_OPEN},
+             {lastchange, calendar:datetime_to_gregorian_seconds(UTC) - 62167219200}],
+    [{api, <<"0.13">>}, {space, <<"H.A.C.K.">>}, {logo, <<"http://hsbp.org/img/hack.gif">>},
+     {url, <<"http://hsbp.org">>}, {location, Location}, {state, State},
+     {contact, Contact}, {projects, Projects}, {issue_report_channels, [<<"email">>]}].
 
 
 %% Common conversion functions
