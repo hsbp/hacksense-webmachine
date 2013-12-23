@@ -4,6 +4,7 @@
         <title>HackSense</title>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <link href="status.rss" type="application/rss+xml" rel="alternate" title="rss" />
+        <meta name="viewport" content="width=device-width, user-scalable=no" />
         <style type="text/css">
             .open {
                 color: #090;
