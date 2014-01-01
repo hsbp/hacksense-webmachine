@@ -23,7 +23,7 @@ init([Format]) ->
 
 generate_etag(ReqData, {_, History} = State) ->
     LastId = (lists:last(History))#status.id,
-    Digest = io_lib:format("~B-~s", [erlang:adler32(term_to_binary(History)), LastId]),
+    Digest = io_lib:format("~B-~s", [erlang:phash2(History), LastId]),
     {Digest, ReqData, State}.
 
 content_types_provided(ReqData, {csv, _} = State) -> {[?CT_CSV], ReqData, State};
