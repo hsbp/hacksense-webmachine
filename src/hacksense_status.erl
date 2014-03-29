@@ -127,7 +127,7 @@ to_spaceapi(ReqData, {_, Status} = State) ->
 
 item_to_spaceapi(#status{status=S, timestamp=TS}) ->
     Location = [{address, <<"Bástya u. 12., 1056 Budapest, Hungary">>},
-                {lon, 47.489167}, {lat, 19.059444}],
+                {lat, 47.489167}, {lon, 19.059444}],
     Projects = [<<"https://github.com/hsbp">>,
                 <<"http://hsbp.org/projects">>, <<"http://hsbp.org/hwprojektek">>],
     Contact = [{email, <<"hack@hsbp.org">>}, {irc, <<"irc://irc.atw-inter.net/hspbp">>},
