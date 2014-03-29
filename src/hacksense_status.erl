@@ -17,6 +17,7 @@
 -define(CT_SPACEAPI, {"application/json", to_spaceapi}).
 -define(STATUS_OPEN, <<$1>>).
 
+-define(RSS_FEED(Key, URL), {Key, [{type, <<"rss">>}, {url, <<URL>>}]}).
 
 %% Webmachine Resource functions
 
@@ -134,11 +135,15 @@ item_to_spaceapi(#status{status=S, timestamp=TS}) ->
                {ml, <<"hspbp@googlegroups.com">>}, {twitter, <<"@hackerspacebp">>},
                {phone, <<"+36 1 445 4225">>}, {jabber, <<"hack@conference.xmpp.hsbp.org">>},
                {facebook, <<"https://www.facebook.com/hackerspace.budapest">>}],
+	Feeds = [
+		?RSS_FEED(blog, "http://hsbp.org/tiki-wiki_rss.php?ver=2"),
+		?RSS_FEED(calendar, "http://hsbp.org/tiki-calendars_rss.php?ver=2"),
+		?RSS_FEED(wiki, "http://hsbp.org/tiki-blogs_rss.php?ver=2")],
     [UTC | _] = calendar:local_time_to_universal_time_dst(timestamp_to_erlang_fmt(TS)),
     State = [{open, S == ?STATUS_OPEN},
              {lastchange, calendar:datetime_to_gregorian_seconds(UTC) - 62167219200}],
     [{api, <<"0.13">>}, {space, <<"H.A.C.K.">>}, {logo, <<"http://hsbp.org/img/hack.gif">>},
-     {url, <<"http://hsbp.org">>}, {location, Location}, {state, State},
+     {url, <<"http://hsbp.org">>}, {location, Location}, {state, State}, {feeds, Feeds},
      {contact, Contact}, {projects, Projects}, {issue_report_channels, [<<"email">>]}].
 
 
