@@ -1,3 +1,5 @@
+%% -*- coding: utf-8 -*-
+
 -module(hacksense_status).
 -export([init/1, generate_etag/2, content_types_provided/2]).
 -export([to_html/2, to_csv/2, to_rss/2, to_xml/2, to_txt/2, to_json/2, to_eeml/2, to_spaceapi/2]).
@@ -128,7 +130,7 @@ to_spaceapi(ReqData, {_, Status} = State) ->
     {mochijson2:encode(item_to_spaceapi(Status)), ?ENABLE_CORS(ReqData), State}.
 
 item_to_spaceapi(#status{status=S, timestamp=TS}) ->
-    Location = [{address, <<"Bástya u. 12., 1056 Budapest, Hungary">>},
+    Location = [{address, <<"Bástya u. 12., 1056 Budapest, Hungary"/utf8>>},
                 {lat, 47.489167}, {lon, 19.059444}],
     Projects = [<<"https://github.com/hsbp">>,
                 <<"http://hsbp.org/projects">>, <<"http://hsbp.org/hwprojektek">>],
