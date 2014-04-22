@@ -18,6 +18,7 @@
 -define(STATUS_OPEN, <<$1>>).
 
 -define(RSS_FEED(Key, URL), {Key, [{type, <<"rss">>}, {url, <<URL>>}]}).
+-define(ENABLE_CORS(RD), wrq:set_resp_headers([{"Access-Control-Allow-Origin", "*"}], (RD))).
 
 %% Webmachine Resource functions
 
@@ -124,7 +125,7 @@ item_to_xml(#status{id=Id, timestamp=TS, status=S}) ->
 %% Space API
 
 to_spaceapi(ReqData, {_, Status} = State) ->
-    {mochijson2:encode(item_to_spaceapi(Status)), ReqData, State}.
+    {mochijson2:encode(item_to_spaceapi(Status)), ?ENABLE_CORS(ReqData), State}.
 
 item_to_spaceapi(#status{status=S, timestamp=TS}) ->
     Location = [{address, <<"Bástya u. 12., 1056 Budapest, Hungary">>},
