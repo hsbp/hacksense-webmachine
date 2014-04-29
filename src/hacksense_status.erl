@@ -18,7 +18,8 @@
 -define(STATUS_OPEN, <<$1>>).
 
 -define(RSS_FEED(Key, URL), {Key, [{type, <<"rss">>}, {url, <<URL>>}]}).
--define(ENABLE_CORS(RD), wrq:set_resp_headers([{"Access-Control-Allow-Origin", "*"}], (RD))).
+-define(ENABLE_CORS(RD), wrq:set_resp_headers([{"Access-Control-Allow-Origin", "*"},
+    {"Cache-Control", "no-cache"}], (RD))).
 
 %% Webmachine Resource functions
 
