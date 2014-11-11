@@ -12,7 +12,6 @@
                   crypto,
                   mochiweb,
                   mnesia,
-                  erlsha2,
                   webmachine
                  ]},
   {mod, { hacksense_app, []}},
