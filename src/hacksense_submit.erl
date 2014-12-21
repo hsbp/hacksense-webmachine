@@ -25,7 +25,7 @@ to_txt(ReqData, State) ->
 check_submit_hmac(SubmitData) ->
     [Id, Status, MAC] = binary:split(SubmitData, <<$!>>, [global]),
     Subject = <<Id/binary, $!, Status/binary>>,
-    case list_to_binary(mochihex:to_hex(hmac:hmac256(get_key(), Subject))) of
+    case list_to_binary(mochihex:to_hex(crypto:hmac(sha256, get_key(), Subject))) of
         MAC -> {Id, Status};
         _ -> wrong_mac
     end.

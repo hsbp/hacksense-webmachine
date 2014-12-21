@@ -1,3 +1,5 @@
+%% -*- coding: utf-8 -*-
+
 -module(hacksense_status).
 -export([init/1, generate_etag/2, content_types_provided/2]).
 -export([to_html/2, to_csv/2, to_rss/2, to_xml/2, to_txt/2, to_json/2, to_eeml/2, to_spaceapi/2]).
@@ -17,7 +19,7 @@
 -define(CT_SPACEAPI, {"application/json", to_spaceapi}).
 -define(STATUS_OPEN, <<$1>>).
 
--define(RSS_FEED(Key, URL), {Key, [{type, <<"rss">>}, {url, <<URL>>}]}).
+-define(RSS_FEED(Key, URL), Key => #{type => <<"rss">>, url => <<URL>>}).
 -define(ENABLE_CORS(RD), wrq:set_resp_headers([{"Access-Control-Allow-Origin", "*"},
     {"Cache-Control", "no-cache"}], (RD))).
 
@@ -55,10 +57,10 @@ to_html(ReqData, {_, Status} = State) ->
 %% JSON
 
 to_json(ReqData, {_, Status} = State) ->
-    {mochijson2:encode(item_to_json(Status)), ReqData, State}.
+    {hacksense_json:encode(item_to_json(Status)), ReqData, State}.
 
 item_to_json(#status{id=Id, timestamp=TS, status=S}) ->
-    [{id, Id}, {'when', TS}, {what, S == ?STATUS_OPEN}].
+    #{id => Id, 'when' => TS, what => S == ?STATUS_OPEN}.
 
 
 %% CSV
@@ -126,28 +128,28 @@ item_to_xml(#status{id=Id, timestamp=TS, status=S}) ->
 %% Space API
 
 to_spaceapi(ReqData, {_, Status} = State) ->
-    {mochijson2:encode(item_to_spaceapi(Status)), ?ENABLE_CORS(ReqData), State}.
+    {hacksense_json:encode(item_to_spaceapi(Status)), ?ENABLE_CORS(ReqData), State}.
 
 item_to_spaceapi(#status{status=S, timestamp=TS}) ->
-    Location = [{address, <<"Bástya u. 12., 1056 Budapest, Hungary">>},
-                {lat, 47.489167}, {lon, 19.059444}],
+    Location = #{address => <<"Bástya u. 12., 1056 Budapest, Hungary"/utf8>>,
+                 lat => 47.489167, lon => 19.059444},
     Projects = [<<"https://github.com/hsbp">>,
                 <<"http://hsbp.org/projects">>, <<"http://hsbp.org/hwprojektek">>],
-    Contact = [{email, <<"hack@hsbp.org">>}, {irc, <<"irc://irc.atw-inter.net/hspbp">>},
-               {ml, <<"hspbp@googlegroups.com">>}, {twitter, <<"@hackerspacebp">>},
-               {phone, <<"+36 1 445 4225">>}, {jabber, <<"hack@conference.xmpp.hsbp.org">>},
-               {facebook, <<"https://www.facebook.com/hackerspace.budapest">>}],
-	Feeds = [
+    Contact = #{email => <<"hack@hsbp.org">>, irc => <<"irc://irc.atw-inter.net/hspbp">>,
+                ml => <<"hspbp@googlegroups.com">>, twitter => <<"@hackerspacebp">>,
+                phone => <<"+36 1 445 4225">>, jabber => <<"hack@conference.xmpp.hsbp.org">>,
+                facebook => <<"https://www.facebook.com/hackerspace.budapest">>},
+	Feeds = #{
 		?RSS_FEED(wiki, "http://hsbp.org/tiki-wiki_rss.php?ver=2"),
 		?RSS_FEED(calendar, "http://hsbp.org/tiki-calendars_rss.php?ver=2"),
-		?RSS_FEED(blog, "http://hsbp.org/tiki-blogs_rss.php?ver=2")],
+		?RSS_FEED(blog, "http://hsbp.org/tiki-blogs_rss.php?ver=2")},
     [UTC | _] = calendar:local_time_to_universal_time_dst(timestamp_to_erlang_fmt(TS)),
-    State = [{open, S == ?STATUS_OPEN},
-             {lastchange, calendar:datetime_to_gregorian_seconds(UTC) - 62167219200}],
-    [{api, <<"0.13">>}, {space, <<"H.A.C.K.">>}, {logo, <<"http://hsbp.org/img/hack.gif">>},
-     {sensors, [{temperature, openhort:fetch_temperatures()}, {humidity, hack2o:fetch_level()}]},
-     {url, <<"http://hsbp.org">>}, {location, Location}, {state, State}, {feeds, Feeds},
-     {contact, Contact}, {projects, Projects}, {issue_report_channels, [<<"email">>]}].
+    State = #{open => S == ?STATUS_OPEN,
+              lastchange => calendar:datetime_to_gregorian_seconds(UTC) - 62167219200},
+	#{api => <<"0.13">>, space => <<"H.A.C.K.">>, logo => <<"http://hsbp.org/img/hack.gif">>,
+      sensors => [{temperature, openhort:fetch_temperatures()}, {humidity, hack2o:fetch_level()}],
+      url => <<"http://hsbp.org">>, location => Location, state => State, feeds => Feeds,
+      contact => Contact, projects => Projects, issue_report_channels => [<<"email">>]}.
 
 
 %% Common conversion functions
