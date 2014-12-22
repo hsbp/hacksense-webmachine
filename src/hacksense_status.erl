@@ -61,7 +61,7 @@ to_html(ReqData, {_, Status} = State) ->
 %% JSON
 
 to_json(ReqData, {_, Status} = State) ->
-    {hacksense_json:encode(item_to_json(Status)), ReqData, State}.
+    {jsx:encode(item_to_json(Status)), ReqData, State}.
 
 item_to_json(#status{id=Id, timestamp=TS, status=S}) ->
     #{id => Id, 'when' => TS, what => S == ?STATUS_OPEN}.
@@ -132,7 +132,7 @@ item_to_xml(#status{id=Id, timestamp=TS, status=S}) ->
 %% Space API
 
 to_spaceapi(ReqData, {_, Status} = State) ->
-    {hacksense_json:encode(item_to_spaceapi(Status)), ?ENABLE_CORS(ReqData), State}.
+    {jsx:encode(item_to_spaceapi(Status), [uescape]), ?ENABLE_CORS(ReqData), State}.
 
 item_to_spaceapi(#status{status=S, timestamp=TS}) ->
     Location = #{address => <<"Bástya u. 12., 1056 Budapest, Hungary"/utf8>>,

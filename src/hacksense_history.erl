@@ -44,7 +44,7 @@ to_html(ReqData, {_, History} = State) ->
 %% JSON
 
 to_json(ReqData, {_, History} = State) ->
-    {hacksense_json:encode(lists:map(fun hacksense_status:item_to_json/1, History)), ReqData, State}.
+    {jsx:encode(lists:map(fun hacksense_status:item_to_json/1, History)), ReqData, State}.
 
 
 %% CSV
