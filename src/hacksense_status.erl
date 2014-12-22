@@ -151,7 +151,7 @@ item_to_spaceapi(#status{status=S, timestamp=TS}) ->
     State = #{open => S == ?STATUS_OPEN,
               lastchange => calendar:datetime_to_gregorian_seconds(UTC) - 62167219200},
 	#{api => <<"0.13">>, space => <<"H.A.C.K.">>, logo => <<"http://hsbp.org/img/hack.gif">>,
-      sensors => [{temperature, openhort:fetch_temperatures()}, {humidity, hack2o:fetch_level()}],
+      sensors => #{temperature => openhort:fetch_temperatures(), humidity => hack2o:fetch_level()},
       url => <<"http://hsbp.org">>, location => Location, state => State, feeds => Feeds,
       contact => Contact, projects => Projects, issue_report_channels => [<<"email">>]}.
 
