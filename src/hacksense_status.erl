@@ -32,6 +32,10 @@ init([Format]) ->
         end),
     {ok, {Format, item_from_db(Status)}}.
 
+generate_etag(ReqData, {spaceapi, Status} = State) ->
+    Digest = io_lib:format("~B-~s", [erlang:phash2(item_to_spaceapi(Status)),
+                                     Status#status.id]),
+    {Digest, ReqData, State};
 generate_etag(ReqData, {_, Status} = State) ->
     {binary_to_list(Status#status.id), ReqData, State}.
 
