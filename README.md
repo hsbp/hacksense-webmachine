@@ -1,7 +1,7 @@
 HackSense REST API
 ==================
 
-REST API for the HackSense system: http://hsbp.org/HackSense
+REST API for the HackSense system: https://hsbp.org/HackSense
 
 Dependencies
 ------------
@@ -23,7 +23,7 @@ Executing `./start.sh` boots the Erlang VM and starts the REST API on http://loc
 
 To clone the backend storage from another instance, use the following command in the Erlang shell. (Don't forget the dot at the end, it's like `;` in C-like languages.)
 
-	hacksense:import_remote_csv("http://vsza.hu/hacksense/history.csv").
+	hacksense:import_remote_csv("https://vsza.hu/hacksense/history.csv").
 
 Configuration
 -------------

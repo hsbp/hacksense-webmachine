@@ -1,7 +1,7 @@
 {% extends "hacksense_layout.dtl" %}
 {% block content %}
 <p>
-	<a href="http://hsbp.org/">H.A.C.K.</a> is currently
+	<a href="https://hsbp.org/">H.A.C.K.</a> is currently
 	<span class="{{ open_closed }}">{{ open_closed }}</span>
 	since {{ since }}
 </p>
