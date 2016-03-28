@@ -150,8 +150,9 @@ item_to_spaceapi(#status{status=S, timestamp=TS}) ->
     [UTC | _] = calendar:local_time_to_universal_time_dst(timestamp_to_erlang_fmt(TS)),
     State = #{open => S == ?STATUS_OPEN,
               lastchange => calendar:datetime_to_gregorian_seconds(UTC) - 62167219200},
+	OpenHort = openhort:load_model(),
 	#{api => '0.13', space => 'H.A.C.K.', logo => 'https://hsbp.org/img/hack.gif',
-      sensors => #{temperature => openhort:fetch_temperatures(), humidity => hack2o:fetch_level()},
+      sensors => #{temperature => openhort:fetch_temperatures(OpenHort)},
       url => 'https://hsbp.org', location => Location, state => State, feeds => Feeds,
       contact => Contact, projects => Projects, issue_report_channels => [email]}.
 

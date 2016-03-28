@@ -1,17 +1,21 @@
 %% -*- coding: utf-8 -*-
 
 -module(openhort).
--export([fetch_temperatures/0]).
+-export([load_model/0, fetch_temperatures/1]).
+-record(openhort_model, {log_tail}).
 -include_lib("kernel/include/file.hrl").
 
 -define(BUFSIZE, 1024).
 
-fetch_temperatures() ->
+load_model() ->
 	Log = filename:join(code:priv_dir(hacksense), "openhort.txt"),
 	{ok, Info} = file:read_file_info(Log, [raw]),
 	{ok, File} = file:open(Log, [read, raw, binary]),
 	{ok, Buffer} = file:pread(File, Info#file_info.size - ?BUFSIZE, ?BUFSIZE),
 	file:close(File),
+	#openhort_model{log_tail=Buffer}.
+
+fetch_temperatures(#openhort_model{log_tail=Buffer}) ->
 	{match, Measurements} = re:run(Buffer, "uploadSensors&data=([^:]+):", [global, {capture, all_but_first, list}]),
 	format_temperatures(lists:last(Measurements)).
 
