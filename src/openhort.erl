@@ -16,9 +16,13 @@ load_model() ->
 	#openhort_model{log_tail=Buffer}.
 
 fetch_events(#openhort_model{log_tail=Buffer}) ->
-	{match, Feedings} = re:run(Buffer, "^(\\d+):.+Etetes:OK", [global, {capture, all_but_first, list}, multiline]),
-	[#{name => <<"J. Random Hacker">>, type => <<"feed-axolotl">>, timestamp => list_to_integer(Feeding)}
-		|| [Feeding] <- Feedings].
+	case re:run(Buffer, "^(\\d+):.+Etetes:OK", [global, {capture, all_but_first, list}, multiline]) of
+		{match, Feedings} ->
+			[#{name => <<"J. Random Hacker">>, type => <<"feed-axolotl">>,
+				timestamp => list_to_integer(Feeding)}
+				|| [Feeding] <- Feedings];
+		nomatch -> []
+	end.
 
 fetch_temperatures(#openhort_model{log_tail=Buffer}) ->
 	{match, Measurements} = re:run(Buffer, "uploadSensors&data=([^:]+):", [global, {capture, all_but_first, list}]),
