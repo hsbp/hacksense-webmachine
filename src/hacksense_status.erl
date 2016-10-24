@@ -153,7 +153,7 @@ item_to_spaceapi(#status{status=S, timestamp=TS}) ->
 	OpenHort = openhort:load_model(),
 	#{api => '0.13', space => 'H.A.C.K.', logo => 'https://hsbp.org/img/hack.gif',
       sensors => #{temperature => openhort:fetch_temperatures(OpenHort)},
-      events => openhort:fetch_events(OpenHort),
+      events => openhort:fetch_events(OpenHort), ext_ccc => chaostreff,
       url => 'https://hsbp.org', location => Location, state => State, feeds => Feeds,
       contact => Contact, projects => Projects, issue_report_channels => [email]}.
 
